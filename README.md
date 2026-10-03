@@ -1,5 +1,9 @@
 # SkillForge
 
+[![CI](https://github.com/TungPeerapat/skillforge/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TungPeerapat/skillforge/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+
 **Turn your codebase and developer workflows into reusable AI agent skills.**
 
 SkillForge is a Python CLI that reads a repository, works out how it is built,

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CI status, license, and Python-version badges in the README.
 - `RELEASING.md`: end-to-end runbook for pushing to GitHub and cutting a release.
 - Release workflow with PyPI Trusted Publishing, tag/version/CHANGELOG checks,
   and automatic GitHub release notes (`.github/workflows/release.yml`).
