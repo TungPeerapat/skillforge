@@ -1,0 +1,45 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A change is about to be committed, pushed, or handed to a reviewer.
+
+## Review workflow
+
+1. **Run the quality gates** (below). These are the repository's own tools, in the order they run
+   in CI where that is known.
+2. **Read the diff before commenting.** `git diff` first, then form opinions.
+3. **Report findings** with `file:line` references, severity, and a concrete suggestion.
+4. **Separate style from substance.** Linters handle style; focus your review on correctness,
+   security, and missing tests.
+5. **Do not rewrite the change silently.** Propose; let the author decide.
+
+## Quality gates
+
+{{ m.cmd_block(ctx.steps) }}
+
+{{ m.commands_table(bp.commands) }}
+
+## What to look for (beyond the linters)
+
+- Input validation and authorization on new entry points.
+- Error handling that hides failures instead of surfacing them.
+- Tests that assert behaviour, not implementation details.
+- Secrets or machine-specific paths in the diff.
+- Migrations or configuration changes that need a rollout plan.
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

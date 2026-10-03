@@ -1,0 +1,43 @@
+id = "fastapi-health-endpoint"
+title = "Add a health endpoint to a FastAPI service"
+description = "The agent must run the API, add an endpoint, and run the test suite."
+fixture = "tests/fixtures/fastapi-app"
+task = """
+Add a GET /health endpoint that returns {"status": "ok"}, then run the test suite.
+"""
+
+expected_skills = ["project-runner", "test-runner", "database-debugger", "migration-guardian"]
+
+[[checks]]
+type = "skill_generated"
+skill = "project-runner"
+
+[[checks]]
+type = "skill_generated"
+skill = "test-runner"
+
+[[checks]]
+type = "workflow_present"
+value = "migrate"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "uvicorn"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "pytest"
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"
+
+[[checks]]
+type = "skill_md_token_budget"
+max_tokens = 5000
+
+[[checks]]
+type = "unknown_recorded"
+value = "service-db"

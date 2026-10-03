@@ -1,0 +1,27 @@
+id = "dotnet-ef-migration"
+title = "Add an EF Core migration to an ASP.NET service"
+description = "The agent must understand the EF Core migration workflow before changing models."
+fixture = "tests/fixtures/dotnet-app"
+task = """
+Add a Description property to Item and create the corresponding EF Core migration.
+"""
+
+expected_skills = ["project-runner", "test-runner", "migration-guardian", "database-debugger"]
+
+[[checks]]
+type = "skill_generated"
+skill = "migration-guardian"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "dotnet ef database update"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "dotnet test"
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"

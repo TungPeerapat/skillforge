@@ -1,0 +1,13 @@
+{
+  "name": "@monorepo/shared",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2",
+    "vitest": "3.0.5"
+  }
+}

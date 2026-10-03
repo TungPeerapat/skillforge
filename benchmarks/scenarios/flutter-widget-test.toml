@@ -1,0 +1,27 @@
+id = "flutter-widget-test"
+title = "Fix a failing Flutter widget test"
+description = "The agent must run Flutter tests and static analysis."
+fixture = "tests/fixtures/flutter-app"
+task = """
+The widget test for the demo app fails after a refactor. Find the cause and fix it.
+"""
+
+expected_skills = ["project-runner", "test-runner", "code-reviewer"]
+
+[[checks]]
+type = "skill_generated"
+skill = "test-runner"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "flutter test"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "flutter analyze"
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"

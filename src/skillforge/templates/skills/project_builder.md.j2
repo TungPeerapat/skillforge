@@ -1,0 +1,34 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A build must be reproduced exactly as the repository builds it (CI uses the same commands).
+
+## Build commands
+
+{{ m.cmd_block(ctx.steps) }}
+
+{{ m.commands_table(bp.commands) }}
+
+## Interpreting failures
+
+1. Read the first error, not the last: build tools often cascade.
+2. Re-run the failing command on its own (from the table above) to get a clean output.
+3. Check that dependencies are installed first — see the setup steps below if they exist.
+4. If the build writes to `dist/`, `build/`, or `target/`, those directories are outputs, not sources.
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

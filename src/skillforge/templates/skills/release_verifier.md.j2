@@ -1,0 +1,46 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A tag, package, or deployment is being prepared.
+
+## Pre-release checklist
+
+1. **Tests pass.** Run the test workflow and report the exact result; do not claim success without it.
+2. **Working tree is clean and reviewed.**
+3. **Changelog is updated**{% if bp.docs %}{% for doc in bp.docs %}{% if doc.kind == 'changelog' %} (`{{ doc.path }}`){% endif %}{% endfor %}{% else %} (no changelog was detected — confirm with the maintainers where release notes live){% endif %}.
+4. **Version is bumped** in the file that declares it.
+5. **Release steps are understood.** Deployment commands below change state outside the repository.
+
+```bash
+python scripts/release_preflight.py
+```
+
+## Commands
+
+{{ m.commands_table(bp.commands) }}
+
+{% if bp.excluded_dangerous %}
+## Commands deliberately excluded
+
+These destructive commands exist in the repository and are **not** part of this skill:
+
+{% for command in bp.excluded_dangerous %}- `{{ command }}`
+{% endfor %}
+{% endif %}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

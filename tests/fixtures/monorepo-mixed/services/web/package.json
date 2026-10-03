@@ -1,0 +1,21 @@
+{
+  "name": "@monorepo/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "test": "vitest run",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "16.0.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "@monorepo/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.7.2",
+    "vitest": "3.0.5"
+  }
+}

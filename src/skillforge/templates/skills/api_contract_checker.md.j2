@@ -1,0 +1,47 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A route was added or changed, a client broke, or the running API must be compared with its spec.
+
+## Detected API surface
+
+{% for api in bp.apis %}- **{{ api.framework or api.kind }}** ({{ api.kind }}) — evidence `{{ api.provenance }}`
+{% if api.entrypoints %}  - entry points: {% for entrypoint in api.entrypoints %}`{{ entrypoint }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if api.spec_paths %}  - specifications: {% for spec in api.spec_paths %}`{{ spec }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}{% if api.router_dirs %}  - route directories: {% for directory in api.router_dirs %}`{{ directory }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}{% endfor %}
+
+## Verification workflow
+
+1. **Start the service** (see the project-runner skill) or confirm a local instance is running.
+2. **List the live routes** with the script below. It performs GET requests only and sends no
+   credentials.
+
+```bash
+python scripts/check_openapi.py --base-url {{ ctx.base_url }}
+```
+
+3. **Compare** the live routes with the specification files and with the code that handles them.
+4. **Report** mismatches as: route, expected shape, actual shape, and the file that defines it.
+5. **Do not change a published contract** without flagging it as a breaking change.
+
+## Commands
+
+{{ m.commands_table(bp.commands) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

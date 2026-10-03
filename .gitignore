@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.tox/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.report.json
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# SkillForge analysis reports and generated output for the demo
+.skillforge/
+examples/*/.skills/
+examples/*/.skillforge/
+examples/*/.claude/skills/
+examples/*/.agents/skills/
+examples/*/.opencode/skills/
+examples/*/skills/
+
+# Rust / misc
+target/

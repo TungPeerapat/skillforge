@@ -1,0 +1,41 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- You need the exact commands that start this project, rather than a generic guess.
+
+## Quick start
+
+{% if ctx.primary %}
+{{ m.cmd_block([ctx.primary]) }}
+The command comes from `{{ ctx.primary.provenance }}` ({{ ctx.primary.source }}).
+{% else %}
+No runnable entry point was found in repository evidence. Ask the maintainers how the project is
+started before improvising a command.
+{% endif %}
+
+{{ m.services_section(bp.services) }}
+
+## Steps
+
+{{ m.steps(ctx.steps) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+{% if bp.excluded_dangerous %}
+- Destructive commands were detected in this repository and deliberately left out of this skill:
+  {% for command in bp.excluded_dangerous %}`{{ command }}`{% if not loop.last %}, {% endif %}{% endfor %}.
+{% endif %}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

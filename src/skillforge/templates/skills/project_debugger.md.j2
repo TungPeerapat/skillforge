@@ -1,0 +1,47 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A crash, a 500 response, or behaviour that differs from documentation must be explained.
+
+## Method
+
+Work through these phases in order; do not skip straight to a fix.
+
+1. **Reproduce.** Start the application with the run command below and trigger the failure.
+2. **Collect context.** Run `python scripts/collect_context.py` for versions, git state, and key
+   files. It is read-only and never prints secret values.
+3. **Isolate.** Decide which layer fails: configuration, dependency service, database, or code.
+4. **Hypothesise and test one change at a time.** Re-run the failing command after each change.
+5. **Report.** State the root cause, the evidence, and the smallest fix — plus what you did not verify.
+
+## Start the application
+
+{% if ctx.primary %}
+{{ m.cmd_block([ctx.primary]) }}
+Source: `{{ ctx.primary.provenance }}`.
+{% else %}
+No run command was found; ask how the service is started.
+{% endif %}
+
+{{ m.services_section(bp.services) }}
+
+## Commands useful during debugging
+
+{{ m.commands_table(bp.commands) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

@@ -1,0 +1,43 @@
+# SkillForge configuration
+# Copy to `skillforge.toml` in the root of the repository you are analysing,
+# or pass an explicit path with `--config`.
+#
+# Precedence (lowest to highest):
+#   built-in defaults < skillforge.toml < SKILLFORGE_* environment variables < CLI flags
+
+[project]
+name = "example"                 # defaults to the repository directory name
+
+[analysis]
+max_file_size = 200_000          # bytes; larger files are summarised, not read
+max_context_tokens = 50_000      # token budget for optional LLM context
+max_files_per_category = 40      # per-category cap when selecting context
+follow_symlinks = false          # keep false unless you trust the repository
+ignore = []                      # extra gitignore-style patterns
+include = []                     # when non-empty, only matching paths are analysed
+
+[provider]
+default = "none"                 # none | mock | openai | openai-compatible | anthropic
+model = ""                       # e.g. gpt-5-mini, claude-sonnet-4-5
+base_url = ""                    # required for openai-compatible/local endpoints
+api_key_env = ""                 # env var holding the key; provider defaults apply
+max_output_tokens = 4_096
+temperature = 0.0
+
+[skills]
+output = ".skills"               # generated skills are written here (repo-relative)
+author = ""                      # optional value for frontmatter metadata
+license = ""                     # optional SPDX id for generated skills; empty = omit
+overwrite = false                # refuse to overwrite existing skills unless true
+
+[security]
+allow_command_execution = false      # v0.1 only supports false
+allow_external_transmission = false  # must be true (or --allow-external-llm) to call a provider
+max_command_risk = "review"          # skills may contain commands up to this risk: safe | review
+redact_secrets = true
+
+[export]
+targets = []                     # e.g. ["claude", "codex", "opencode", "portable"]
+
+[evaluation]
+timeout_seconds = 300          # reserved for the agent executor API; deterministic checks ignore it

@@ -1,0 +1,27 @@
+id = "monorepo-service-change"
+title = "Change one service in a mixed monorepo"
+description = "The agent must work in the right component and not run unrelated toolchains."
+fixture = "tests/fixtures/monorepo-mixed"
+task = """
+Add a /version endpoint to services/api and run only that service's tests.
+"""
+
+expected_skills = ["project-runner", "test-runner", "database-debugger"]
+
+[[checks]]
+type = "skill_generated"
+skill = "project-runner"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "uvicorn"
+
+[[checks]]
+type = "workflow_present"
+value = "test"
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"

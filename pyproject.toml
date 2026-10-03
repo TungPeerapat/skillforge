@@ -1,0 +1,155 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skillforge"
+version = "0.1.0"
+description = "Turn your codebase and developer workflows into reusable AI agent skills."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "SkillForge Contributors" }]
+keywords = [
+  "ai-agents",
+  "agent-skills",
+  "claude-code",
+  "codex",
+  "opencode",
+  "developer-tools",
+  "cli",
+  "llm",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Code Generators",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+  "typer>=0.12.3",
+  "rich>=13.7.1",
+  "pydantic>=2.7",
+  "jinja2>=3.1.4",
+  "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+llm = ["httpx>=0.27"]
+dev = [
+  "httpx>=0.27",
+  "mypy>=1.11",
+  "pytest>=8.2",
+  "pytest-asyncio>=0.24",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "types-PyYAML>=6.0.12",
+  "build>=1.2",
+]
+
+[project.scripts]
+skillforge = "skillforge.cli.main:app"
+sf = "skillforge.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/skillforge/skillforge"
+Repository = "https://github.com/skillforge/skillforge"
+Issues = "https://github.com/skillforge/skillforge/issues"
+Changelog = "https://github.com/skillforge/skillforge/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skillforge"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/docs",
+  "/examples",
+  "/benchmarks",
+  "/pyproject.toml",
+  "/README.md",
+  "/LICENSE",
+  "/CHANGELOG.md",
+  "/CONTRIBUTING.md",
+  "/SECURITY.md",
+  "/skillforge.toml.example",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+exclude = ["tests/fixtures", "examples", "benchmarks/fixtures", "src/skillforge/templates"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "UP",  # pyupgrade
+  "SIM", # flake8-simplify
+  "RUF", # ruff-specific
+]
+ignore = [
+  "E501",    # handled by the formatter
+  "SIM108",  # ternaries are not always clearer
+  "RUF012",  # mutable class attrs are fine in pydantic models
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011"]
+"src/skillforge/cli/**" = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/skillforge"]
+exclude = "src/skillforge/templates/"
+mypy_path = "src"
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = false
+strict_equality = true
+show_error_codes = true
+pretty = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["yaml.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.2"
+testpaths = ["tests/unit", "tests/integration"]
+norecursedirs = ["fixtures", "examples", "node_modules", ".venv", "build", "dist"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+  "integration: cross-module and filesystem integration tests",
+  "llm: tests that call a real LLM provider (require credentials, skipped by default)",
+  "slow: tests that take more than a couple of seconds",
+]
+filterwarnings = ["error::DeprecationWarning:skillforge.*"]
+
+[tool.coverage.run]
+source = ["src/skillforge"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = ["if TYPE_CHECKING:", "if __name__ == .__main__.:", "raise NotImplementedError"]

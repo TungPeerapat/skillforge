@@ -1,0 +1,36 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- You need to know whether a change broke something before reporting it as done.
+
+## Run the suite
+
+{{ m.cmd_block(ctx.steps) }}
+
+{{ m.commands_table(bp.commands) }}
+
+## Working with failures
+
+1. Run the full suite once to see the overall state, then re-run only the failing tests.
+2. Read the assertion and the traceback before changing code; do not "fix" tests to match a
+   buggy implementation.
+3. If a test needs a database or service that is not running, start it first
+   {% if bp.services %}({{ bp.services | map(attribute='name') | join(', ') }}){% else %}(see the repository's compose file){% endif %}.
+4. Distinguish a real failure from a skipped test; report the difference.
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

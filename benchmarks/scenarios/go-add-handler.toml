@@ -1,0 +1,31 @@
+id = "go-add-handler"
+title = "Add a handler to a Go service"
+description = "The agent must add a route and run the Go test suite."
+fixture = "tests/fixtures/go-app"
+task = """
+Add GET /version returning {"version": "dev"} and run the tests.
+"""
+
+expected_skills = ["project-runner", "test-runner", "project-builder"]
+
+[[checks]]
+type = "skill_generated"
+skill = "test-runner"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "go test ./..."
+
+[[checks]]
+type = "command_with_evidence"
+contains = "go build ./..."
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"
+
+[[checks]]
+type = "technology_detected"
+value = "Gin"

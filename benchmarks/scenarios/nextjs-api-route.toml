@@ -1,0 +1,31 @@
+id = "nextjs-api-route"
+title = "Add an API route to a Next.js app with Prisma"
+description = "The agent must add a route handler and understand the Prisma migration workflow."
+fixture = "tests/fixtures/nextjs-app"
+task = """
+Add app/api/version/route.ts returning the package version. Do not touch the database schema.
+"""
+
+expected_skills = ["project-runner", "test-runner", "migration-guardian"]
+
+[[checks]]
+type = "skill_generated"
+skill = "project-runner"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "pnpm run dev"
+
+[[checks]]
+type = "command_with_evidence"
+contains = "db:migrate"
+
+[[checks]]
+type = "validation_passes"
+
+[[checks]]
+type = "no_dangerous_commands"
+
+[[checks]]
+type = "skill_md_token_budget"
+max_tokens = 5000

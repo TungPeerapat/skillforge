@@ -1,0 +1,48 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- Connection errors, failed queries, or unclear schema state need investigation.
+
+## Detected databases
+
+{% for database in bp.databases %}- **{{ database.display }}**{% if database.orm %} · ORM: {{ database.orm }}{% endif %}{% if database.migration_tool %} · migrations: {{ database.migration_tool }}{% endif %}
+  - evidence: `{{ database.provenance }}`
+{% endfor %}
+
+{{ m.services_section(bp.services) }}
+
+## Safe inspection order
+
+1. **Confirm the service is running** (read-only, safe).
+2. **Check configuration names**, not values: `python scripts/collect_context.py` prints the
+   environment variables this project expects (names only).
+3. **Inspect schema state** with the project's read-only command before writing anything.
+4. Only then consider a write — and confirm with the user first.
+
+## Commands
+
+{{ m.commands_table(bp.commands) }}
+
+## Rules for anything that writes
+
+- Migrations and seeders change shared state. Confirm before running them.
+- Never paste real connection strings or passwords into prompts, logs, or tickets.
+- If the database engine is `unknown`, check `references/architecture.md` for what was detected and
+  ask before assuming.
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

@@ -1,0 +1,53 @@
+{% import "skills/_macros.j2" as m %}
+# {{ bp.title }}
+
+{{ bp.repository_summary }}.
+
+## When to use this skill
+
+- {{ bp.when_to_use }}
+- A model change needs a migration, or a migration needs to be applied/reviewed.
+
+## Migration setup
+
+{% for database in bp.databases %}{% if database.migration_tool %}- Tool: **{{ database.migration_tool }}** ({{ database.engine }})
+{% if database.migration_dirs %}  - Directories: {% for directory in database.migration_dirs %}`{{ directory }}`{% if not loop.last %}, {% endif %}{% endfor %}
+{% endif %}  - Evidence: `{{ database.provenance }}`
+{% endif %}{% endfor %}
+
+## Workflow
+
+1. **Inspect before writing.** Run `python scripts/migration_status.py` — it reads migration files
+   statically and reports revisions, heads, and orphaned revisions. It never touches a database.
+2. **Check the live revision** with the read-only command from the table below (needs a reachable
+   database).
+3. **Review the pending migration(s).** Generated SQL must match the intended model change.
+4. **Apply** with the project's migration command, after confirming the target environment.
+5. **Verify** that the schema matches the models and that tests still pass.
+
+```bash
+python scripts/migration_status.py
+```
+
+## Commands
+
+{{ m.commands_table(bp.commands) }}
+
+## Safety rules
+
+- Applying migrations changes database state. Confirm the environment with the user first.
+- Never run downgrades, resets, or `--force` flags against a shared database.
+- If multiple migration heads are reported, resolve them with a merge revision before applying.
+- Commit the migration file together with the model change that requires it.
+
+{{ m.unknowns_section(bp.unknowns) }}
+
+{{ m.scripts_section(ctx.scripts) }}
+
+## Guardrails
+
+{{ m.guardrails(bp.guardrails) }}
+
+{{ m.references_section(ctx.references) }}
+
+{{ m.footer() }}

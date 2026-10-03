@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: ruff format --check src tests
+
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: mypy
+
+  test:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: python -m pip install -e ".[dev]"
+      - run: pytest -q --cov=skillforge --cov-report=term-missing
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      - run: pytest -q
+        if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12') }}
+
+  demo:
+    name: Demo workflow (no API key)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -e .
+      - name: Analyze, generate, validate, export
+        run: |
+          skillforge analyze examples/fastapi-demo --json > analysis.json
+          skillforge generate examples/fastapi-demo
+          skillforge validate examples/fastapi-demo
+          skillforge export examples/fastapi-demo --to all
+          python -c "import json; d=json.load(open('analysis.json')); assert d['plan']['candidates']"
+      - name: Assert no API key was needed
+        run: |
+          test -z "${OPENAI_API_KEY:-}" && test -z "${ANTHROPIC_API_KEY:-}"
+      - name: Benchmark scenarios
+        run: skillforge eval --repo .
+
+  build:
+    name: Package build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install build
+      - run: python -m build
+      - name: Verify the wheel installs and the entry points work
+        run: |
+          python -m pip install dist/*.whl
+          skillforge --version
+          sf --version
+          python -c "from pathlib import Path; import skillforge; print(sorted(p.name for p in (Path(skillforge.__file__).parent / 'templates' / 'skills').glob('*.j2')))"
+
+  llm-integration:
+    name: LLM integration (optional)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && secrets.OPENAI_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[llm,dev]"
+      - run: pytest -q -m llm
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
