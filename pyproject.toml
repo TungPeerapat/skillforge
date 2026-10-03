@@ -137,6 +137,9 @@ ignore_missing_imports = true
 minversion = "8.2"
 testpaths = ["tests/unit", "tests/integration"]
 norecursedirs = ["fixtures", "examples", "node_modules", ".venv", "build", "dist"]
+# Make `import tests.conftest` work under bare `pytest` (CI) as well as
+# `python -m pytest` (which adds the CWD to sys.path automatically).
+pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = "-ra --strict-markers --strict-config"
 markers = [

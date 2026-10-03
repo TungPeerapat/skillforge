@@ -6,6 +6,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # The project uses open-ended ranges (>=x.y); only widen a requirement when
+    # the new release falls outside the existing range. Avoids PRs that merely
+    # raise minimums.
+    versioning-strategy: increase-if-necessary
     groups:
       python-minor-patch:
         patterns: ["*"]

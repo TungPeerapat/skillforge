@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- CI tests failed on every runner with `ModuleNotFoundError: No module named
+  'tests'`: `pytest` (as CI runs it) does not put the working directory on
+  `sys.path` the way `python -m pytest` does. `pythonpath = ["."]` is now set in
+  the pytest configuration, so both invocations behave identically.
 - CLI output on Windows consoles with legacy code pages (for example cp874 or
   cp1252) now falls back to ASCII frames instead of printing garbled borders,
   and writing never fails with UnicodeEncodeError when output is redirected.
