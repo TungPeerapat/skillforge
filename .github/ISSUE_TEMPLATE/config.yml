@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/skillforge/skillforge/security/advisories/new
+    url: https://github.com/TungPeerapat/skillforge/security/advisories/new
     about: Report vulnerabilities privately; please do not open a public issue.
   - name: Usage question
-    url: https://github.com/skillforge/skillforge/discussions
+    url: https://github.com/TungPeerapat/skillforge/discussions
     about: Ask how to use SkillForge on your repository.

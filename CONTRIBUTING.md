@@ -6,7 +6,7 @@ changes over large rewrites.
 ## Getting set up
 
 ```bash
-git clone https://github.com/skillforge/skillforge
+git clone https://github.com/TungPeerapat/skillforge
 cd skillforge
 python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"

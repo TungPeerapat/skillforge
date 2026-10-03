@@ -57,10 +57,10 @@ skillforge = "skillforge.cli.main:app"
 sf = "skillforge.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/skillforge/skillforge"
-Repository = "https://github.com/skillforge/skillforge"
-Issues = "https://github.com/skillforge/skillforge/issues"
-Changelog = "https://github.com/skillforge/skillforge/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/TungPeerapat/skillforge"
+Repository = "https://github.com/TungPeerapat/skillforge"
+Issues = "https://github.com/TungPeerapat/skillforge/issues"
+Changelog = "https://github.com/TungPeerapat/skillforge/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/skillforge"]
