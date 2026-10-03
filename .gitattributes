@@ -1,0 +1,22 @@
+# Keep line endings stable across platforms: text files are LF in the working
+# tree so that fixture content, generated skills, and byte-comparison tests are
+# identical on Windows, macOS, and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.gz binary
+*.whl binary
+
+# Windows batch files legitimately need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
