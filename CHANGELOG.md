@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI: least-privilege permissions, per-job timeouts, coverage artifact, a
   deterministic-and-offline assertion for the demo run, and a wheel-install check.
 
+### Fixed
+
+- CLI output on Windows consoles with legacy code pages (for example cp874 or
+  cp1252) now falls back to ASCII frames instead of printing garbled borders,
+  and writing never fails with UnicodeEncodeError when output is redirected.
+
 ### Changed
 
 - CI no longer references `secrets` in a job-level condition, which GitHub

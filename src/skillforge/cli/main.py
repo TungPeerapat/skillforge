@@ -32,6 +32,15 @@ def _version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
+def supports_box_characters(encoding: str | None) -> bool:
+    """True when the terminal encoding can render Rich's default box borders."""
+    try:
+        "│─╭".encode(encoding or "utf-8")
+    except (UnicodeEncodeError, LookupError, TypeError):
+        return False
+    return True
+
+
 def _force_utf8_streams() -> None:
     """Make stdout/stderr UTF-8 so box drawing cannot crash a legacy console.
 
@@ -72,8 +81,13 @@ def main(
     no_color: bool = typer.Option(False, "--no-color", help="Disable colored output."),
 ) -> None:
     """Global options are available on every command."""
+    # Decide the frame style from the *terminal* encoding, then force UTF-8 so
+    # writes never fail. Legacy code pages get ASCII frames instead of garbled
+    # box-drawing characters.
+    terminal_encoding = getattr(sys.stdout, "encoding", None)
+    safe_boxes = not supports_box_characters(terminal_encoding)
     _force_utf8_streams()
-    console = Console(no_color=no_color)
+    console = Console(no_color=no_color, safe_box=safe_boxes)
     state = AppState(
         json_mode=bool(json_output),
         verbose=int(verbose),
