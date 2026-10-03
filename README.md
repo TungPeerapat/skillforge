@@ -335,6 +335,7 @@ No test requires an API key. Provider tests use a fake in-process provider.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
+Release process: [RELEASING.md](RELEASING.md).
 Adding a target agent: [docs/adding-an-exporter.md](docs/adding-an-exporter.md).
 Adding a provider: [docs/adding-a-provider.md](docs/adding-a-provider.md).
 

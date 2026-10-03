@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in SkillForge behaves incorrectly or crashes.
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please **do not paste secrets**:
+        redact API keys, tokens, and real connection strings from any output you include.
+
+        For security vulnerabilities, use the private channel in `SECURITY.md` instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the exact command and the full output (stderr included).
+      placeholder: |
+        $ skillforge analyze path/to/repo
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: command
+    attributes:
+      label: Which command?
+      options:
+        - skillforge init
+        - skillforge analyze
+        - skillforge generate
+        - skillforge list
+        - skillforge validate
+        - skillforge doctor
+        - skillforge eval
+        - skillforge export
+        - skillforge clean
+        - other / not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: SkillForge version
+      description: Output of `skillforge --version`.
+      placeholder: "skillforge 0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor output
+      description: Paste `skillforge doctor --json` (redact paths and keys if needed).
+      render: json
+    validations:
+      required: false
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version and OS
+      placeholder: "Python 3.12.4 on Ubuntu 24.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        Is this reproducible on one of the bundled fixtures
+        (`tests/fixtures/fastapi-app`, `go-app`, `nextjs-app`, `dotnet-app`,
+        `flutter-app`, `monorepo-mixed`, `hostile-repo`)? If not, describe the
+        smallest repository shape that triggers it.
+    validations:
+      required: false

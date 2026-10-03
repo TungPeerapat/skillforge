@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege by default; individual jobs widen it when needed.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -18,6 +22,7 @@ jobs:
   lint:
     name: Lint and format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,6 +36,7 @@ jobs:
   typecheck:
     name: Type check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,6 +49,7 @@ jobs:
   test:
     name: Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -55,14 +62,24 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install -e ".[dev]"
-      - run: pytest -q --cov=skillforge --cov-report=term-missing
+      - name: Tests with coverage
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
-      - run: pytest -q
+        run: pytest -q --cov=skillforge --cov-report=term-missing --cov-report=xml
+      - name: Tests
         if: ${{ !(matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12') }}
+        run: pytest -q
+      - name: Upload coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: warn
 
   demo:
     name: Demo workflow (no API key)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -76,16 +93,32 @@ jobs:
           skillforge generate examples/fastapi-demo
           skillforge validate examples/fastapi-demo
           skillforge export examples/fastapi-demo --to all
-          python -c "import json; d=json.load(open('analysis.json')); assert d['plan']['candidates']"
-      - name: Assert no API key was needed
+          python -c "import json; d=json.load(open('analysis.json')); assert d['plan']['candidates'], 'no skills planned'"
+      - name: Assert generation was deterministic and offline
         run: |
-          test -z "${OPENAI_API_KEY:-}" && test -z "${ANTHROPIC_API_KEY:-}"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifests = sorted(Path("examples/fastapi-demo/.skills").glob("*/.skillforge.json"))
+          assert manifests, "no generated skills found"
+          for path in manifests:
+              data = json.loads(path.read_text(encoding="utf-8"))
+              assert data["mode"] == "deterministic", (str(path), data["mode"])
+              assert not data.get("provider"), (str(path), data.get("provider"))
+          print(f"{len(manifests)} skills generated deterministically without a provider")
+          PY
+      - name: Reproducibility check
+        run: |
+          skillforge generate examples/fastapi-demo --force
+          skillforge validate examples/fastapi-demo
       - name: Benchmark scenarios
         run: skillforge eval --repo .
 
   build:
     name: Package build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -94,23 +127,50 @@ jobs:
           cache: pip
       - run: python -m pip install build
       - run: python -m build
-      - name: Verify the wheel installs and the entry points work
+      - name: Verify the wheel installs and ships every template
         run: |
-          python -m pip install dist/*.whl
+          python -m pip install --force-reinstall dist/*.whl
           skillforge --version
           sf --version
-          python -c "from pathlib import Path; import skillforge; print(sorted(p.name for p in (Path(skillforge.__file__).parent / 'templates' / 'skills').glob('*.j2')))"
+          python - <<'PY'
+          import pathlib
+
+          import skillforge
+
+          root = pathlib.Path(skillforge.__file__).parent / "templates"
+          skills = sorted(path.name for path in (root / "skills").glob("*.j2"))
+          scripts = sorted(path.name for path in (root / "scripts").glob("*.py"))
+          assert len(skills) == 10, skills
+          assert len(scripts) == 6, scripts
+          print("templates:", skills)
+          print("scripts:", scripts)
+          PY
+          skillforge doctor --json > /dev/null
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
 
   llm-integration:
-    name: LLM integration (optional)
+    name: LLM integration (optional, manual)
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && secrets.OPENAI_API_KEY != '' }}
+    timeout-minutes: 15
+    # Manual only: live provider calls must never gate a normal run. The test
+    # skips itself when the key is absent, so this job is safe to trigger
+    # without secrets configured.
+    if: github.event_name == 'workflow_dispatch'
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
       - run: python -m pip install -e ".[llm,dev]"
-      - run: pytest -q -m llm
+      - name: Run live provider tests
+        run: pytest -q -m llm
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SKILLFORGE_TEST_MODEL: ${{ vars.SKILLFORGE_TEST_MODEL }}

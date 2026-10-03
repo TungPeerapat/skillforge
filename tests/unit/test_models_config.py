@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError as PydanticValidationError
-from tests.conftest import write_file
+from tests.conftest import REPO_ROOT, write_file
 
 from skillforge.config import Settings, load_settings, user_config_path
 from skillforge.errors import ConfigError
@@ -232,6 +232,19 @@ def test_provider_api_key_env_resolution() -> None:
     explicit = Settings.model_validate({"provider": {"default": "openai", "api_key_env": "MY_KEY"}})
     assert explicit.provider_api_key_env() == "MY_KEY"
     assert Settings().provider.enabled is False
+
+
+def test_version_is_single_sourced() -> None:
+    """The runtime version must come from pyproject.toml, not a second constant."""
+    import tomllib
+
+    import skillforge
+
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    distribution_version = pyproject["project"]["version"]
+    if skillforge.__version__ == "0.0.0.dev0":
+        return  # raw source checkout that was never installed
+    assert skillforge.__version__ == distribution_version
 
 
 def test_user_config_path_uses_env_override() -> None:

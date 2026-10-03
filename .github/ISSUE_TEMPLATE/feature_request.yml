@@ -1,0 +1,64 @@
+name: Feature request
+description: Suggest a new detector, exporter, provider, skill type, or workflow.
+title: "[feature] "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SkillForge prefers small, evidence-backed features. The most helpful
+        requests describe the repository shape and the workflow that is missing.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the repository or agent workflow that is not covered today.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Detector / stack support (language, framework, infra)
+        - Discovery (new command or workflow source)
+        - Planner (new skill type)
+        - Generator (templates, references, scripts)
+        - Validator (new check)
+        - Exporter (new agent target)
+        - Provider (new LLM vendor)
+        - Evaluation (scenario or metric)
+        - CLI / configuration / docs
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What evidence could justify it?
+      description: |
+        SkillForge only recommends and generates things it can point at. Which
+        files would a detector or planner rule read (manifests, config, CI, docs)?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Could this be solved by hand-written skill files or config today?
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This keeps working without an LLM (deterministic path preserved)
+          required: true
+        - label: I am willing to open a pull request for this
+          required: false

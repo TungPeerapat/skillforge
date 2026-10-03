@@ -27,6 +27,21 @@ Everything runs offline. No API key is needed for the test suite.
 5. Documentation matches behaviour. If you add a feature, update the relevant
    file in `docs/` and the README limitation list if it changes.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs the same steps on every pull request:
+
+| Job | What it does |
+| --- | --- |
+| `Lint and format` | `ruff check` + `ruff format --check` |
+| `Type check` | `mypy` |
+| `Tests (os, python)` | `pytest` on Linux and Windows, Python 3.12 and 3.13 (coverage on one combo) |
+| `Demo workflow (no API key)` | analyze → generate → validate → export on `examples/fastapi-demo`, asserts determinism, then `skillforge eval` |
+| `Package build` | builds sdist + wheel, installs the wheel, verifies templates ship |
+| `LLM integration (optional, manual)` | live provider test from **Actions → Run workflow**; self-skips without a key, never gates a normal run |
+
+Releases are documented in [RELEASING.md](RELEASING.md).
+
 ## Design rules
 
 - **Deterministic first.** A feature must work without an LLM unless it is

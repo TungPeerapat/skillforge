@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `RELEASING.md`: end-to-end runbook for pushing to GitHub and cutting a release.
+- Release workflow with PyPI Trusted Publishing, tag/version/CHANGELOG checks,
+  and automatic GitHub release notes (`.github/workflows/release.yml`).
+- Dependabot configuration for Python packages and GitHub Actions.
+- Issue forms (bug report, feature request) and a pull request template.
+- CI: least-privilege permissions, per-job timeouts, coverage artifact, a
+  deterministic-and-offline assertion for the demo run, and a wheel-install check.
+
+### Changed
+
+- CI no longer references `secrets` in a job-level condition, which GitHub
+  rejects; the optional live-provider job is manual-only and self-skips.
+- `skillforge.__version__` now reads the installed distribution metadata, so the
+  version lives only in `pyproject.toml`.
+
 ## [0.1.0] — 2026-10-03
 
 First usable release. Deterministic core, no API key required.
