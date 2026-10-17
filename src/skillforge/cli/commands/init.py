@@ -40,13 +40,19 @@ license = ""
 overwrite = false
 
 [security]
-allow_command_execution = false      # not implemented in this release; keep false
+allow_command_execution = false      # must stay false: `skillforge learn` gates execution per invocation
 allow_external_transmission = false  # consent for sending context to a remote provider
 max_command_risk = "review"
 redact_secrets = true
 
 [export]
 targets = []                     # for example ["claude", "codex", "opencode", "portable"]
+
+[knowledge]
+max_inventory_entries = 2000     # dependency inventory cap (most important kept)
+read_lockfiles = false           # opt-in: retain lockfile text for exact versions
+max_lockfile_bytes = 33554432    # per-lockfile cap (32 MiB)
+priority = {{}}                    # per-package importance overrides, e.g. {{ fastapi = "critical" }}
 
 [evaluation]
 timeout_seconds = 300
@@ -82,16 +88,20 @@ def register(app: typer.Typer) -> None:
         gitignore_updated = False
         if gitignore:
             gitignore_path = repo_root / ".gitignore"
-            entry = ".skills/"
             existing = ""
             if gitignore_path.is_file():
                 existing = gitignore_path.read_text(encoding="utf-8", errors="replace")
-            if entry not in existing.splitlines():
+            additions = [
+                entry
+                for entry in (".skills/", ".skillforge/")
+                if entry not in existing.splitlines()
+            ]
+            if additions:
                 separator = "" if existing.endswith("\n") or not existing else "\n"
-                atomic_write_text(
-                    gitignore_path,
-                    existing + separator + f"# SkillForge generated skills\n{entry}\n",
+                block = "# SkillForge generated skills and learning sessions\n" + "".join(
+                    f"{entry}\n" for entry in additions
                 )
+                atomic_write_text(gitignore_path, existing + separator + block)
                 gitignore_updated = True
 
         if state.json_mode:

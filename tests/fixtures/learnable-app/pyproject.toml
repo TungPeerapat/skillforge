@@ -1,0 +1,6 @@
+[project]
+name = "learnable-app"
+version = "0.0.1"
+description = "Offline fixture application for SkillForge learning tests."
+requires-python = ">=3.12"
+dependencies = []

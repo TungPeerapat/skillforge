@@ -38,7 +38,7 @@ ENV_PREFIX = "SKILLFORGE_"
 USER_CONFIG_ENV = "SKILLFORGE_USER_CONFIG"
 
 _SECTIONS = frozenset(
-    {"project", "analysis", "provider", "skills", "security", "export", "evaluation"}
+    {"project", "analysis", "provider", "skills", "security", "export", "evaluation", "knowledge"}
 )
 _MAX_PARENT_SEARCH = 5
 
@@ -105,11 +105,12 @@ class SecuritySettings(BaseModel):
     redact_secrets: bool = True
 
     @model_validator(mode="after")
-    def _no_execution_in_v01(self) -> SecuritySettings:
+    def _no_execution_via_config(self) -> SecuritySettings:
         if self.allow_command_execution:
             raise ValueError(
-                "command execution is not implemented in this release; "
-                "leave security.allow_command_execution = false"
+                "repository configuration cannot enable command execution; "
+                "execution is gated per invocation by `skillforge learn` approval "
+                "(interactive default No, or --yes); leave this false"
             )
         return self
 
@@ -126,6 +127,42 @@ class EvaluationSettings(BaseModel):
     timeout_seconds: int = Field(default=300, ge=1, le=3_600)
 
 
+class KnowledgeSettings(BaseModel):
+    """Versioned library intelligence settings (v0.3, additive)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_inventory_entries: int = Field(default=2_000, ge=1, le=100_000)
+    allow_network: bool = False
+    max_document_bytes: int = Field(default=2 * 1024 * 1024, ge=1024, le=20 * 1024 * 1024)
+    max_pages_per_technology: int = Field(default=200, ge=1, le=1000)
+    max_quote_chars: int = Field(default=200, ge=0, le=1000)
+    #: Opt-in lockfile reading for exact version resolution. ``analyze`` output
+    #: is byte-identical whether this is on or off; only knowledge consumers
+    #: request retained lockfile text.
+    read_lockfiles: bool = False
+    #: Per-lockfile retention cap in bytes (default 32 MiB, per the v0.3 plan).
+    max_lockfile_bytes: int = Field(default=32 * 1024 * 1024, ge=1_024, le=512 * 1024 * 1024)
+    #: Package name -> priority ("critical" … "transitive"); case-insensitive.
+    priority: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("priority")
+    @classmethod
+    def _validate_priority(cls, value: dict[str, str]) -> dict[str, str]:
+        from skillforge.models.knowledge import KnowledgePriority
+
+        cleaned: dict[str, str] = {}
+        for name, raw in value.items():
+            parsed = KnowledgePriority.from_config(str(raw))
+            if parsed is None:
+                raise ValueError(
+                    f"knowledge.priority['{name}'] must be one of: "
+                    "critical, high, medium, low, transitive"
+                )
+            cleaned[name] = parsed.value
+        return cleaned
+
+
 class Settings(BaseModel):
     """Validated SkillForge configuration."""
 
@@ -138,6 +175,7 @@ class Settings(BaseModel):
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     export: ExportSettings = Field(default_factory=ExportSettings)
     evaluation: EvaluationSettings = Field(default_factory=EvaluationSettings)
+    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
 
     #: Path of the project configuration actually used, or ``None``.
     config_path: str | None = None
@@ -256,7 +294,13 @@ def load_settings(
     else:
         project_path = find_project_config(repo_root)
     if project_path is not None:
-        data = _deep_merge(data, load_toml_file(project_path))
+        project_data = load_toml_file(project_path)
+        if "allow_network" in project_data.get("knowledge", {}):
+            raise ConfigError(
+                "repository configuration cannot set knowledge.allow_network; "
+                "use user configuration or --allow-network"
+            )
+        data = _deep_merge(data, project_data)
 
     data = _deep_merge(data, _env_overrides(environment))
     if overrides:

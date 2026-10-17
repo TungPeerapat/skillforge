@@ -9,7 +9,7 @@ flowchart TD
     C --> D[Discovery<br/>commands + workflows<br/>with evidence]
     D --> E[Planner<br/>9 rule-based skill types]
     E --> F[Generator<br/>blueprint → templates]
-    F --> G[Validator<br/>11 check families]
+    F --> G[Validator<br/>12 check families]
     G --> H[(Skill bundle)]
     H --> I[Exporters<br/>Claude Code · Codex · OpenCode · portable]
 
@@ -18,17 +18,30 @@ flowchart TD
     K --> L[Enrichment<br/>schema + evidence check]
     L --> F
 
-    H --> M[Evaluation<br/>deterministic checks +<br/>honest NOT MEASURED]
+    H -. v0.2 learning .-> M[Execution plan<br/>evidence-backed steps]
+    M --> N{User approval}
+    N -->|approved| O[Execution backend<br/>argv-only, bounded,<br/>process-group cleanup]
+    O --> P[Readiness verification<br/>HTTP / TCP / log / process]
+    P --> Q[Diagnosis + bounded retry]
+    Q --> O
+    P -->|verified| R[Generalize<br/>LearnedWorkflow]
+    R --> S[Upgrade skill<br/>verified-workflow.md + manifest]
+    S --> G
+    R --> T[(.skillforge/sessions)]
+
+    H --> U[Evaluation<br/>deterministic checks +<br/>honest NOT MEASURED]
 ```
 
 Every arrow is a Python package with a narrow interface. The deterministic
 column (left) is the product; the optional column (right) is an enhancement that
-can be removed without breaking anything.
+can be removed without breaking anything. Execution (v0.2) is only reachable
+through the approval gate and never affects static analysis.
 
 ## Layers and dependency direction
 
 ```
-cli  →  services (analyzer, planner, generator, validator, evaluation, doctor)
+cli  →  services (analyzer, planner, generator, validator, evaluation, doctor,
+                 execution, learning)
              ↓
      models (pydantic, pure data)      security (pure functions)
              ↓                               ↓
@@ -45,6 +58,11 @@ cli  →  services (analyzer, planner, generator, validator, evaluation, doctor)
   keeps agent-specific behaviour out of the core.
 - `providers` are injected. No module imports an SDK directly; `httpx` is
   imported lazily inside the HTTP adapters.
+- `execution` is the **only** package that spawns repository processes. It is
+  argv-only, bounded, and consumes plans produced by `learning`.
+- `learning` orchestrates planning, approval, execution, diagnosis, and the
+  upgrade of verified skills. It never writes skills without execution
+  evidence.
 
 ## Data flow for one command
 
@@ -86,9 +104,12 @@ runs, excluding `generated_at`.
 | New agent target | `exporters/` | `BaseExporter.skills_root(repo_root) -> Path` |
 | New LLM vendor | `providers/` | `LLMProvider` protocol |
 | Real agent evaluation | `evaluation/executors.py` | `AgentExecutor.run(scenario, task, condition)` |
-| AST analysis | `context/selector.py` ranker, `analyzer/detectors/` | not implemented in v0.1 |
+| New execution backend | `execution/` | `ExecutionBackend.run/start/verify/cleanup/describe` |
+| New learning target | `learning/targets.py` | `LearningTarget.build_plan` + `upgrade` |
+| Smarter readiness | `learning/evidence.py`, `execution/readiness.py` | `ReadinessPlan` + probe strategies |
+| AST analysis | `context/selector.py` ranker, `analyzer/detectors/` | not implemented in v0.2 |
 
-## Known architectural limitations (v0.1)
+## Known architectural limitations (v0.2)
 
 - Go, Java, .NET, and Flutter detectors read the root manifest layout; a
   multi-module Go/Java repository is only partially analysed. Python, Node, and
@@ -96,5 +117,9 @@ runs, excluding `generated_at`.
 - Workflow synthesis is rule-based; it does not build a full task dependency
   graph.
 - No file watching, caching, or incremental analysis.
-- `skillforge learn` (observing a workflow and generalizing it) is designed for
-  but not implemented; see the roadmap in the README.
+- Execution is local only (no container sandbox) and the only learning target
+  is `project-runner`.
+- Diagnosis is deterministic plus optional LLM assistance; SkillForge never
+  rewrites the target repository.
+- `skillforge learn` verifies workflows through controlled execution; static
+  analysis alone always yields `UNVERIFIED` skills.

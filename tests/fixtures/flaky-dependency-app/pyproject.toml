@@ -1,0 +1,6 @@
+[project]
+name = "flaky-dependency-app"
+version = "0.0.1"
+description = "Offline fixture with a not-yet-ready dependency."
+requires-python = ">=3.12"
+dependencies = []

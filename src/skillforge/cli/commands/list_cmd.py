@@ -1,4 +1,4 @@
-"""``skillforge list`` — planned and generated skills."""
+"""``skillforge list`` — planned and generated skills, with verification status."""
 
 from __future__ import annotations
 
@@ -6,13 +6,25 @@ from pathlib import Path
 
 import typer
 from rich.table import Table
+from rich.text import Text
 
 from skillforge.analyzer import analyze_repository
 from skillforge.cli.common import REPO_ARGUMENT, emit_json, get_state, handle_errors
 from skillforge.errors import NotFoundError
+from skillforge.learning.fingerprint import check_staleness
+from skillforge.models import SkillVerification, VerificationStatus
 from skillforge.planner import SkillPlanner
 from skillforge.skills import read_bundle
 from skillforge.utils.fs import human_bytes
+from skillforge.utils.git import read_git_info
+
+_STATUS_STYLES = {
+    "VERIFIED": "green",
+    "UNVERIFIED": "yellow",
+    "STALE": "bold red",
+    "FAILED": "red",
+    "LEARNING": "yellow",
+}
 
 
 def register(app: typer.Typer) -> None:
@@ -54,8 +66,10 @@ def register(app: typer.Typer) -> None:
                         "confidence": candidate.confidence,
                         "dependencies": candidate.dependencies,
                         "path": "",
+                        "verification": _unverified_payload(),
                     }
                 )
+        git_info = None
         if generated or show_both:
             output_dir = settings.output_dir(repo_root)
             if output_dir.is_dir():
@@ -73,6 +87,7 @@ def register(app: typer.Typer) -> None:
                                 "confidence": 0.0,
                                 "dependencies": [],
                                 "path": str(skill_dir),
+                                "verification": _unverified_payload(),
                             }
                         )
                         continue
@@ -80,6 +95,27 @@ def register(app: typer.Typer) -> None:
                         len(content.encode("utf-8"))
                         for content in stored.bundle.all_contents().values()
                     )
+                    verification = (
+                        stored.manifest.verification
+                        if stored.manifest is not None
+                        else SkillVerification()
+                    )
+                    stale = False
+                    stale_reasons: list[str] = []
+                    if (
+                        verification.status is VerificationStatus.VERIFIED
+                        and verification.fingerprint is not None
+                    ):
+                        if git_info is None:
+                            git_info = read_git_info(repo_root)
+                        report = check_staleness(
+                            verification.fingerprint,
+                            repo_root,
+                            current_commit=git_info.commit,
+                            current_dirty=git_info.dirty,
+                        )
+                        stale = report.stale
+                        stale_reasons = report.reasons
                     entries.append(
                         {
                             "name": stored.name,
@@ -90,6 +126,14 @@ def register(app: typer.Typer) -> None:
                             "path": str(skill_dir),
                             "bytes": size,
                             "files": len(stored.bundle.files) + 1,
+                            "verification": {
+                                "status": verification.status.value,
+                                "display": ("STALE" if stale else verification.status.label),
+                                "method": verification.method,
+                                "session": verification.session_id,
+                                "stale": stale,
+                                "stale_reasons": stale_reasons,
+                            },
                         }
                     )
 
@@ -101,20 +145,35 @@ def register(app: typer.Typer) -> None:
         table = Table(title=f"Skills for {repo_root.name}", title_justify="left")
         table.add_column("Skill", style="bold cyan")
         table.add_column("State")
+        table.add_column("Verification")
         table.add_column("Conf.", justify="right")
         table.add_column("Size", justify="right")
         table.add_column("Reason", style="dim")
         for entry in entries:
+            verification = entry.get("verification", {})
+            display = str(verification.get("display", "UNVERIFIED"))
             table.add_row(
                 entry["name"],
                 entry["state"],
+                Text(display, style=_STATUS_STYLES.get(display, "")),
                 f"{entry.get('confidence', 0.0):.2f}",
                 human_bytes(int(entry.get("bytes", 0))) if entry.get("bytes") else "—",
-                (entry.get("reason") or "")[:80],
+                (entry.get("reason") or "")[:60],
             )
         console.print(table)
         if not entries:
             console.print("[dim]Nothing to show. Run [bold]skillforge analyze[/bold] first.[/dim]")
+
+
+def _unverified_payload() -> dict:
+    return {
+        "status": VerificationStatus.UNVERIFIED.value,
+        "display": VerificationStatus.UNVERIFIED.label,
+        "method": "static-analysis",
+        "session": None,
+        "stale": False,
+        "stale_reasons": [],
+    }
 
 
 __all__ = ["register"]

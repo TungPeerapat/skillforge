@@ -80,6 +80,15 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def sha256_file(path: Path, *, chunk_size: int = 1 << 20) -> str:
+    """Streamed sha256 of a file (v0.3 store hash verification)."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(chunk_size):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def human_bytes(size: int) -> str:
     """Format a byte count for humans."""
     value = float(size)

@@ -14,6 +14,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from skillforge.models.common import Certainty, Evidence
+from skillforge.models.learning import SkillVerification
 from skillforge.utils.markdown import render_frontmatter
 from skillforge.utils.tokens import estimate_tokens
 
@@ -251,6 +252,21 @@ class SkillPlan(BaseModel):
         return [item.name for item in self.candidates]
 
 
+class KnowledgeRef(BaseModel):
+    """Additive pointer to one global-store knowledge entry (v0.3).
+
+    Stored in ``.skillforge.json`` next to the verification block; SKILL.md
+    frontmatter is never touched, so Agent Skills compatibility is preserved.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    technology: str
+    version: str
+    store_hash: str = ""
+    coverage_status: str = ""
+
+
 class SkillManifest(BaseModel):
     """Contents of the ``.skillforge.json`` file inside a generated skill."""
 
@@ -271,6 +287,12 @@ class SkillManifest(BaseModel):
     evidence_count: int = 0
     file_hashes: dict[str, str] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
+    #: Verification state learned through controlled execution (v0.2). Stored
+    #: here rather than in SKILL.md frontmatter to preserve Agent Skills
+    #: compatibility.
+    verification: SkillVerification = Field(default_factory=SkillVerification)
+    #: Versioned knowledge reference (v0.3, additive and optional).
+    knowledge: KnowledgeRef | None = None
 
     @property
     def filename(self) -> str:

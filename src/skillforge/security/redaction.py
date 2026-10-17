@@ -21,7 +21,7 @@ SENSITIVE_ENV_HINTS = (
 )
 
 _ASSIGNMENT_RE = re.compile(
-    r"""\b(?P<name>[A-Za-z_][A-Za-z0-9_]{0,64})\s*(?P<sep>[:=])\s*(?P<value>\S{6,})"""
+    r"""\b(?P<name>[A-Za-z_][A-Za-z0-9_]{0,64})[ \t]*(?P<sep>[:=])[ \t]*(?P<value>[^\s"'`,;)\]}\[]{6,})"""
 )
 
 

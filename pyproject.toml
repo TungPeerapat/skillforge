@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "skillforge"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turn your codebase and developer workflows into reusable AI agent skills."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -37,9 +37,11 @@ dependencies = [
   "pydantic>=2.7",
   "jinja2>=3.1.4",
   "pyyaml>=6.0.2",
+  "packaging>=23.2",
 ]
 
 [project.optional-dependencies]
+knowledge = ["httpx>=0.27"]
 llm = ["httpx>=0.27"]
 dev = [
   "httpx>=0.27",
@@ -146,6 +148,7 @@ markers = [
   "integration: cross-module and filesystem integration tests",
   "llm: tests that call a real LLM provider (require credentials, skipped by default)",
   "slow: tests that take more than a couple of seconds",
+  "execution: tests that execute trusted local fixtures or child processes",
 ]
 filterwarnings = ["error::DeprecationWarning:skillforge.*"]
 

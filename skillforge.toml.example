@@ -31,13 +31,19 @@ license = ""                     # optional SPDX id for generated skills; empty 
 overwrite = false                # refuse to overwrite existing skills unless true
 
 [security]
-allow_command_execution = false      # v0.1 only supports false
+allow_command_execution = false      # must stay false: execution is gated per `skillforge learn` invocation
 allow_external_transmission = false  # must be true (or --allow-external-llm) to call a provider
 max_command_risk = "review"          # skills may contain commands up to this risk: safe | review
 redact_secrets = true
 
 [export]
 targets = []                     # e.g. ["claude", "codex", "opencode", "portable"]
+
+[knowledge]
+max_inventory_entries = 2000     # dependency inventory cap (most important kept)
+read_lockfiles = false           # opt-in: retain lockfile text for exact versions
+max_lockfile_bytes = 33554432    # per-lockfile cap (32 MiB)
+priority = {}                    # per-package importance overrides, e.g. { fastapi = "critical" }
 
 [evaluation]
 timeout_seconds = 300          # reserved for the agent executor API; deterministic checks ignore it

@@ -1,0 +1,186 @@
+# Curated official-source authority map (v0.3, K3).
+#
+# Every entry is evidence-backed by a human review: the official repository,
+# release/tag convention, and documentation hosts for one package. SkillForge
+# never fetches anything in K3; this table generates *candidate* URLs only,
+# and every candidate still passes OfficialSourcePolicy (HTTPS, host
+# verification, community denylist) before it is recorded as accepted.
+#
+# Keys per entry:
+#   ecosystem, package        required; "package" is the lowercase package name
+#   hosts                     hosts owned by the project (subdomains allowed)
+#   repository                official source repository
+#   tag_template              URL template for the exact release tag
+#                             placeholders: {version}, {version_dashed}
+#   docs / api / changelog / migration          latest-version URLs
+#   docs_version_template / api_version_template
+#                             versioned URLs; placeholders:
+#                             {version}, {major}, {minor}, {version_dashed}
+
+version = "2026-10-04"
+
+[[entry]]
+ecosystem = "pypi"
+package = "fastapi"
+hosts = ["fastapi.tiangolo.com"]
+repository = "https://github.com/fastapi/fastapi"
+tag_template = "https://github.com/fastapi/fastapi/releases/tag/{version}"
+docs = "https://fastapi.tiangolo.com/"
+api = "https://fastapi.tiangolo.com/reference/"
+changelog = "https://fastapi.tiangolo.com/release-notes/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "uvicorn"
+hosts = ["www.uvicorn.org"]
+repository = "https://github.com/encode/uvicorn"
+tag_template = "https://github.com/encode/uvicorn/releases/tag/{version}"
+docs = "https://www.uvicorn.org/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "pydantic"
+hosts = ["docs.pydantic.dev"]
+repository = "https://github.com/pydantic/pydantic"
+tag_template = "https://github.com/pydantic/pydantic/releases/tag/v{version}"
+docs_version_template = "https://docs.pydantic.dev/{major}.{minor}/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "sqlalchemy"
+hosts = ["docs.sqlalchemy.org", "www.sqlalchemy.org"]
+repository = "https://github.com/sqlalchemy/sqlalchemy"
+docs = "https://docs.sqlalchemy.org/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "alembic"
+hosts = ["alembic.sqlalchemy.org"]
+repository = "https://github.com/sqlalchemy/alembic"
+docs = "https://alembic.sqlalchemy.org/en/latest/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "httpx"
+hosts = ["www.python-httpx.org", "www.encode.io"]
+repository = "https://github.com/encode/httpx"
+tag_template = "https://github.com/encode/httpx/releases/tag/{version}"
+docs = "https://www.python-httpx.org/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "pytest"
+hosts = ["docs.pytest.org"]
+repository = "https://github.com/pytest-dev/pytest"
+tag_template = "https://github.com/pytest-dev/pytest/releases/tag/{version}"
+docs = "https://docs.pytest.org/en/stable/"
+changelog = "https://docs.pytest.org/en/stable/changelog.html"
+
+[[entry]]
+ecosystem = "pypi"
+package = "ruff"
+hosts = ["docs.astral.sh"]
+repository = "https://github.com/astral-sh/ruff"
+docs = "https://docs.astral.sh/ruff/"
+
+[[entry]]
+ecosystem = "pypi"
+package = "mypy"
+hosts = ["mypy.readthedocs.io"]
+repository = "https://github.com/python/mypy"
+tag_template = "https://github.com/python/mypy/releases/tag/v{version}"
+docs = "https://mypy.readthedocs.io/en/stable/"
+
+[[entry]]
+ecosystem = "npm"
+package = "next"
+hosts = ["nextjs.org"]
+repository = "https://github.com/vercel/next.js"
+tag_template = "https://github.com/vercel/next.js/releases/tag/v{version}"
+docs = "https://nextjs.org/docs"
+
+[[entry]]
+ecosystem = "npm"
+package = "react"
+hosts = ["react.dev", "reactjs.org"]
+repository = "https://github.com/facebook/react"
+tag_template = "https://github.com/facebook/react/releases/tag/v{version}"
+docs = "https://react.dev/"
+
+[[entry]]
+ecosystem = "npm"
+package = "react-dom"
+hosts = ["react.dev", "reactjs.org"]
+repository = "https://github.com/facebook/react"
+tag_template = "https://github.com/facebook/react/releases/tag/v{version}"
+
+[[entry]]
+ecosystem = "npm"
+package = "prisma"
+hosts = ["www.prisma.io"]
+repository = "https://github.com/prisma/prisma"
+tag_template = "https://github.com/prisma/prisma/releases/tag/{version}"
+docs = "https://www.prisma.io/docs/"
+aliases = ["@prisma/client"]
+
+[[entry]]
+ecosystem = "npm"
+package = "typescript"
+hosts = ["www.typescriptlang.org"]
+repository = "https://github.com/microsoft/TypeScript"
+tag_template = "https://github.com/microsoft/TypeScript/releases/tag/v{version}"
+docs = "https://www.typescriptlang.org/docs/"
+
+[[entry]]
+ecosystem = "npm"
+package = "vitest"
+hosts = ["vitest.dev"]
+repository = "https://github.com/vitest-dev/vitest"
+tag_template = "https://github.com/vitest-dev/vitest/releases/tag/v{version}"
+docs = "https://vitest.dev/"
+
+[[entry]]
+ecosystem = "nuget"
+package = "newtonsoft.json"
+hosts = ["www.newtonsoft.com"]
+repository = "https://github.com/JamesNK/Newtonsoft.Json"
+tag_template = "https://github.com/JamesNK/Newtonsoft.Json/releases/tag/{version}"
+docs = "https://www.newtonsoft.com/json"
+
+[[entry]]
+ecosystem = "nuget"
+package = "serilog"
+hosts = ["serilog.net"]
+repository = "https://github.com/serilog/serilog"
+docs = "https://serilog.net/"
+
+[[entry]]
+ecosystem = "go"
+package = "github.com/gin-gonic/gin"
+hosts = ["gin-gonic.com"]
+repository = "https://github.com/gin-gonic/gin"
+tag_template = "https://github.com/gin-gonic/gin/releases/tag/v{version}"
+docs = "https://gin-gonic.com/docs/"
+
+[[entry]]
+ecosystem = "go"
+package = "github.com/stretchr/testify"
+hosts = ["pkg.go.dev"]
+repository = "https://github.com/stretchr/testify"
+tag_template = "https://github.com/stretchr/testify/releases/tag/v{version}"
+docs = "https://pkg.go.dev/github.com/stretchr/testify"
+
+[[entry]]
+ecosystem = "pub"
+package = "http"
+hosts = ["pub.dev"]
+repository = "https://github.com/dart-lang/http"
+docs = "https://pub.dev/packages/http"
+
+[[entry]]
+ecosystem = "maven"
+package = "com.google.guava:guava"
+hosts = ["guava.dev", "github.com"]
+repository = "https://github.com/google/guava"
+tag_template = "https://github.com/google/guava/releases/tag/v{version}"
+api_version_template = "https://guava.dev/releases/{version}/api/docs/"

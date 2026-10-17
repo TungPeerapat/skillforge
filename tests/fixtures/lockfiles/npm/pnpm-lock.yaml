@@ -1,0 +1,26 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    dependencies:
+      next:
+        specifier: 16.0.1
+        version: 16.0.1
+
+packages:
+  next@16.0.1:
+    resolution: {integrity: sha512-aaaa}
+  '@prisma/client@6.1.0':
+    resolution: {integrity: sha512-cccc}
+  react@19.0.0(react@19.0.0):
+    resolution: {integrity: sha512-bbbb}
+  postcss@8.4.49:
+    resolution: {integrity: sha512-dddd}
+
+snapshots:
+  next@16.0.1: {}
+  react@19.0.0(react@19.0.0): {}

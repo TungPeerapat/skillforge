@@ -1,0 +1,6 @@
+[project]
+name = "missing-env-app"
+version = "0.0.1"
+description = "Offline fixture that requires an environment variable."
+requires-python = ">=3.12"
+dependencies = []

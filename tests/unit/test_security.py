@@ -73,6 +73,31 @@ def test_redact_text_is_idempotent() -> None:
     assert once == twice
 
 
+def test_redact_text_preserves_json_structure() -> None:
+    """Redaction runs over serialized JSON; punctuation must survive."""
+    cases = [
+        ('"stderr_excerpt": "API_KEY=sk-live-abcdefghijklmnopqrstuvwx",', "API_KEY=sk-live-"),
+        ("API_KEY=abc123def456, next", "abc123def456"),
+        ('{"token": "ghp_' + "a" * 36 + '"}', "ghp_"),
+        ("password=hunter2secretvalue);", "hunter2secretvalue"),
+    ]
+    for raw, secret in cases:
+        redacted = redact_text(raw)
+        assert secret not in redacted
+        assert redact_text(redacted) == redacted
+
+
+def test_redact_text_fixes_are_json_round_trippable() -> None:
+    import json
+
+    payload = {"stderr_excerpt": "API_KEY=sk-live-abcdefghijklmnopqrstuvwx"}
+    text = json.dumps(payload)
+    redacted = redact_text(text)
+    parsed = json.loads(redacted)
+    assert "sk-live-" not in parsed["stderr_excerpt"]
+    assert parsed["stderr_excerpt"].startswith("API_KEY=")
+
+
 def test_is_sensitive_name() -> None:
     assert is_sensitive_name("GITHUB_TOKEN")
     assert is_sensitive_name("db_password")

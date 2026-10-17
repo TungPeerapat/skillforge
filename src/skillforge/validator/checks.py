@@ -24,6 +24,7 @@ from skillforge.models import (
     SkillBundle,
     SkillManifest,
     ValidationResult,
+    VerificationStatus,
     is_valid_skill_name,
 )
 from skillforge.security.paths import is_absolute_local_path
@@ -505,6 +506,66 @@ def check_manifest(target: ValidationTarget, result: ValidationResult) -> None:
         )
 
 
+# ----------------------------------------------------------------- verification
+
+
+def check_verification(target: ValidationTarget, result: ValidationResult) -> None:
+    """A skill may only claim VERIFIED with real execution evidence."""
+    result.checked.append("verification")
+    manifest = target.manifest
+    if manifest is None or manifest.verification is None:
+        return
+    verification = manifest.verification
+    if verification.status is VerificationStatus.VERIFIED:
+        problems: list[str] = []
+        if verification.method != "execution":
+            problems.append("method must be 'execution' (verified means executed)")
+        if not verification.session_id:
+            problems.append("session id is missing")
+        if verification.verified_at is None:
+            problems.append("verification timestamp is missing")
+        fingerprint = verification.fingerprint
+        if fingerprint is None or not fingerprint.workflow_fingerprint:
+            problems.append("repository fingerprint is missing")
+        if "references/verified-workflow.md" not in target.bundle.files:
+            problems.append("references/verified-workflow.md is missing")
+        for problem in problems:
+            result.add(
+                "verification.invalid",
+                FindingSeverity.ERROR,
+                f"skill claims VERIFIED but {problem}",
+                location=".skillforge.json",
+                hint=(
+                    "VERIFIED requires execution evidence; regenerate with "
+                    "`skillforge learn project-runner`"
+                ),
+            )
+        if fingerprint is not None and target.profile is not None:
+            from skillforge.learning.fingerprint import check_staleness
+
+            report = check_staleness(
+                fingerprint,
+                Path(target.profile.root_path),
+                current_commit=target.profile.git.commit,
+                current_dirty=target.profile.git.dirty,
+            )
+            if report.stale:
+                result.add(
+                    "verification.stale",
+                    FindingSeverity.WARNING,
+                    "verification is stale: " + report.summary,
+                    location=".skillforge.json",
+                    hint="re-run `skillforge learn project-runner` to verify again",
+                )
+    elif verification.status in (VerificationStatus.FAILED, VerificationStatus.LEARNING):
+        result.add(
+            "verification.transient-state",
+            FindingSeverity.WARNING,
+            f"manifest records transient verification state '{verification.status.value}'",
+            location=".skillforge.json",
+        )
+
+
 #: All checks, in display order.
 DEFAULT_CHECKS = (
     check_frontmatter,
@@ -518,4 +579,5 @@ DEFAULT_CHECKS = (
     check_command_safety,
     check_command_evidence,
     check_manifest,
+    check_verification,
 )

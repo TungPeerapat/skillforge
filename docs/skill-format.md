@@ -75,6 +75,14 @@ and in `references/evidence.md` with the observation kind:
 the reason the skill was recommended. `skillforge validate` compares those hashes
 and reports files that changed after generation.
 
+From v0.2 the manifest also carries a `verification` block
+(`status`, `method`, `session_id`, `verified_at`, `fingerprint`, `summary`).
+`method: execution` plus a recorded session and repository fingerprint is what
+makes a skill `VERIFIED`; static analysis alone stays `UNVERIFIED`, and changed
+evidence files make it report as `STALE`. This stays out of the SKILL.md
+frontmatter on purpose: the frontmatter remains portable Agent Skills fields
+only.
+
 ## Agent compatibility notes
 
 | Agent | Directory (project) | Frontmatter it acts on |

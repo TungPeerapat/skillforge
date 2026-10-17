@@ -1,0 +1,6 @@
+[project]
+name = "silent-app"
+version = "0.0.1"
+description = "Offline fixture that never becomes ready."
+requires-python = ">=3.12"
+dependencies = []

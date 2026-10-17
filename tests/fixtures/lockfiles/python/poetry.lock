@@ -1,0 +1,13 @@
+[[package]]
+name = "httpx"
+version = "0.27.2"
+description = "A next generation HTTP client."
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
+name = "certifi"
+version = "2024.8.30"
+description = "Python package for providing Mozilla's CA Bundle."
+optional = false
+python-versions = ">=3.6"

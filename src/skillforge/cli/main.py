@@ -111,6 +111,7 @@ def register_commands() -> None:
         export,
         generate,
         init,
+        learn,
         list_cmd,
         validate,
     )
@@ -118,7 +119,18 @@ def register_commands() -> None:
         eval as eval_cmd,
     )
 
-    for module in (init, analyze, generate, list_cmd, validate, doctor, eval_cmd, export, clean):
+    for module in (
+        init,
+        analyze,
+        generate,
+        learn,
+        list_cmd,
+        validate,
+        doctor,
+        eval_cmd,
+        export,
+        clean,
+    ):
         module.register(app)
 
 

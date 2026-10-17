@@ -10,15 +10,19 @@ SkillForge is a Python CLI that reads a repository, works out how it is built,
 run, tested, and operated — then generates portable
 [Agent Skills](https://agentskills.io/specification) (`SKILL.md` + `references/` +
 `scripts/`) for coding agents such as Claude Code, OpenAI Codex, and OpenCode.
+From v0.2 it can also **verify** the running workflow through controlled,
+approved execution and upgrade the generated skill with proven knowledge.
 
 It runs **locally and deterministically by default**. No API key is required for
-analysis, planning, generation, validation, or export. An LLM is optional and
-consent-gated, and it can never add commands that are not backed by repository
-evidence.
+analysis, planning, generation, learning, validation, or export. An LLM is
+optional and consent-gated, and it can never add commands that are not backed by
+repository evidence.
 
 ```
-Repository → Discovery → Static analysis → Workflows → Skill plan
-           → Generation → Validation → Agent-specific export
+Repository → Discovery → Static analysis → Workflows → Skill plan → Generation
+           → Validation → Export
+           → (v0.2) Execution plan → Approval → Controlled execution → Verify
+           → Learn → Upgrade skill
 ```
 
 ## The problem
@@ -73,6 +77,45 @@ Recommended skills
 $ skillforge generate examples/fastapi-demo
 Generated 8 skill(s) under examples/fastapi-demo/.skills/
 
+$ skillforge learn project-runner examples/fastapi-demo --dry-run
+
+SkillForge Learning Session
+
+Target
+  project-runner
+
+Execution plan
+ #  Phase      Command / check                 Risk             Evidence
+ 1  Setup      uv sync                         REVIEW_REQUIRED  uv.lock:tool.uv
+ 2  Services   docker compose up -d db cache   REVIEW_REQUIRED  README.md:L17
+ 3  Migration  alembic upgrade head            REVIEW_REQUIRED  alembic.ini
+ 4  Launch     make run                        SAFE             Makefile:L6
+
+Verification
+  HTTP GET http://127.0.0.1:8000/health → expect 2xx (inferred)
+
+No commands executed (--dry-run).
+
+$ skillforge learn project-runner examples/fastapi-demo
+… plan shown above; approval defaults to No …
+Continue? [y/N] y
+
+Launching...
+Waiting for readiness...
+Verifying...
+
+✓ GET http://127.0.0.1:8000/health returned 200
+✓ Workflow verified
+
+project-runner
+Status: VERIFIED
+Skill upgraded: examples/fastapi-demo/.skills/project-runner
+
+$ skillforge list examples/fastapi-demo --generated
+Skill                 State      Verification
+project-runner        generated  VERIFIED
+test-runner           generated  UNVERIFIED
+
 $ skillforge validate examples/fastapi-demo
 All 8 skill(s) passed validation.
 
@@ -91,7 +134,7 @@ description: Start and verify the fastapi-demo application locally. Use when the
 compatibility: Requires Python >=3.12, Docker
 metadata:
   generator: skillforge
-  generator-version: 0.1.0
+  generator-version: 0.2.0
   source-repository: fastapi-demo
   certainty: inference
 ---
@@ -149,7 +192,8 @@ cd /path/to/your/project
 skillforge init                # creates skillforge.toml + .gitignore entry
 skillforge analyze             # stack, workflows, recommended skills
 skillforge generate            # writes .skills/<name>/
-skillforge validate            # 11 check families, exits non-zero on errors
+skillforge validate            # 12 check families, exits non-zero on errors
+skillforge learn project-runner  # verify the workflow, upgrade the skill to VERIFIED
 skillforge export --to claude  # or codex, opencode, portable, all
 skillforge doctor              # environment and agent availability
 ```
@@ -162,6 +206,8 @@ skillforge generate --force                # overwrite existing skills
 skillforge generate --only-safe            # restrict to SAFE commands
 skillforge generate --provider mock        # exercise the LLM path offline
 skillforge generate --provider openai --allow-external-llm   # explicit consent
+skillforge learn project-runner --dry-run  # plan and classify; execute nothing
+skillforge learn project-runner --yes --only-safe --ready-timeout 30
 skillforge validate --strict               # treat missing manifests as warnings
 skillforge eval                            # run the benchmark scenarios
 ```
@@ -197,19 +243,36 @@ Nine skill types, each recommended only when the repository justifies it:
 Recommendations carry a reason, evidence, confidence, dependencies, and risks —
 for example: *"Migration tooling detected: Alembic (`alembic.ini`)."*
 
+Every generated skill starts **UNVERIFIED**. After `skillforge learn` performs a
+successful controlled run, `project-runner` is upgraded in place:
+
+- `references/verified-workflow.md` — only steps that actually succeeded;
+- `references/troubleshooting.md` — failures that were observed and resolved;
+- a concise `## Verification` section in `SKILL.md`;
+- verification metadata in `.skillforge.json` (status, method, session,
+  timestamp, repository fingerprint).
+
+`skillforge list` reports `VERIFIED`, `UNVERIFIED`, or `STALE` (when the
+evidence a verification depends on has changed), and `--json` exposes the same
+fields. Verification metadata never touches SKILL.md frontmatter, so Agent
+Skills compatibility is preserved.
+
 ## Security model
 
 - **Discovery never executes repository content.** Commands are parsed, classified,
   and quoted as evidence; never run.
-- **Execution is not implemented in v0.1.** `security.allow_command_execution = true`
-  is rejected at configuration load. Generated scripts refuse review-level steps
-  without `--confirm`, never contain destructive commands, and never use a shell.
+- **Execution exists from v0.2, but only through `skillforge learn`** behind an
+  evidence-backed plan, explicit approval (interactive default No or `--yes`),
+  risk gating, argv-only commands, repository-confined working directories,
+  timeouts, output caps, and process-group cleanup. A repository cannot enable
+  execution through its configuration. Local execution is **not a sandbox**:
+  `--sandbox docker` is rejected until a container backend actually exists.
 - **Destructive commands are excluded** from skills by a static risk classifier
-  (`SAFE` / `REVIEW_REQUIRED` / `DANGEROUS`), and the validator errors if one
-  appears anyway.
+  (`SAFE` / `REVIEW_REQUIRED` / `DANGEROUS`), never scheduled by the learning
+  planner, and re-classified before execution.
 - **Secrets never travel:** secret files are skipped before reading, evidence
-  snippets are redacted at model construction, logs pass a redaction filter, and
-  the validator scans generated output.
+  snippets are redacted at model construction, logs pass a redaction filter,
+  sessions store only redacted excerpts, and the validator scans generated output.
 - **Prompt injection is treated as data:** suspicious instructions in docs become
   repository risks, and LLM prompts wrap repository content in untrusted-data
   delimiters.
@@ -217,8 +280,13 @@ for example: *"Migration tooling detected: Alembic (`alembic.ini`)."*
   `security.allow_external_transmission = true`); localhost endpoints are exempt.
 - Path traversal, symlink escapes, and absolute paths are rejected by
   `safe_join` and by validator checks.
+- **VERIFIED is never a claim, it is evidence:** a skill can only become VERIFIED
+  with a recorded execution session, a repository fingerprint, and verified
+  references; repository changes make it STALE.
 
-Full details: [docs/security.md](docs/security.md).
+Full details: [docs/security.md](docs/security.md) and
+[docs/execution-security.md](docs/execution-security.md). Learning:
+[docs/learning.md](docs/learning.md).
 
 ## Supported agents
 
@@ -282,8 +350,10 @@ src/skillforge/
 ├── planner/      # rule-based skill recommendation
 ├── generator/    # blueprints, Jinja templates, scripts, enrichment
 ├── skills/       # bundle model + safe on-disk store
-├── validator/    # 11 check families
-├── security/     # secrets, command risk, path safety, injection, redaction
+├── validator/    # 12 check families
+├── security/     # secrets, command risk, path safety, argv, injection, redaction
+├── execution/    # v0.2: execution backend, process control, readiness
+├── learning/     # v0.2: plans, sessions, diagnosis, generalization, upgrade
 ├── providers/    # LLMProvider protocol + adapters
 ├── exporters/    # agent adapters
 └── evaluation/   # scenarios, checks, honest metrics
@@ -296,40 +366,47 @@ pip install -e ".[dev]"
 ruff check src tests
 ruff format --check src tests
 mypy
-pytest -q                       # 320+ tests, no network required
+pytest -q                       # 476+ tests, no network required
 python -m build                 # package build
 ```
 
 Test layout:
 
 - `tests/unit/` — scanner/ignore, discovery, planner, generator, validator,
-  security, providers, context, exporters, evaluation, CLI
+  security, providers, context, exporters, evaluation, execution, learning, CLI
 - `tests/integration/` — fixture analysis for FastAPI, Next.js, Go, .NET,
-  Flutter, mixed monorepo, and a hostile repository; full CLI workflow
+  Flutter, mixed monorepo, and a hostile repository; full CLI workflow;
+  controlled-execution learning against trusted fixtures (`execution` marker)
 - `tests/fixtures/` — real (small) repositories, also used by `skillforge eval`
 - `benchmarks/scenarios/` — evaluation scenarios
 
 No test requires an API key. Provider tests use a fake in-process provider.
+Execution tests only run commands from fixtures under `tests/fixtures/`; they
+are offline, deterministic, and marked `execution`.
 
-## Limitations (v0.1, stated honestly)
+## Limitations (v0.2, stated honestly)
 
-- Execution is not implemented: SkillForge will not run your commands, and
-  evaluation does not run agents.
+- Learning supports only `project-runner`, and execution is local only — there
+  is no container sandbox (`--sandbox docker` is rejected, not pretended).
+- One long-running launch command per plan; foreground compose commands are
+  reported rather than scheduled.
+- Readiness supports HTTP, TCP, startup log lines, and process liveness.
+- Diagnosis covers common local failures; SkillForge never modifies your code.
 - Go, Java, .NET, and Flutter detectors read the root manifest; multi-module
   layouts are only partially analysed (Python and Node handle per-package
   manifests).
 - Command discovery is regex/JSON/TOML/YAML based; no tree-sitter AST analysis yet.
-- No incremental analysis, caching, or file watching.
-- `skillforge learn` (observing a real workflow and generalizing it) is designed
-  for but not implemented.
+- No incremental analysis or caching; no versioned library knowledge yet.
 - The portable frontmatter avoids `allowed-tools` on purpose.
 
 ## Roadmap
 
-- **v0.2** — tree-sitter symbol analysis, multi-module Go/Java support, richer
-  workflow graphs.
-- **v0.3** — `skillforge learn`: capture a successful procedure, strip project
-  specifics and secrets, generalize it, and evaluate the result.
+- **v0.2** — controlled execution, verification, bounded retries, and skills that
+  upgrade from UNVERIFIED to VERIFIED (implemented).
+- **v0.3** — versioned library intelligence: exact dependency versions,
+  authoritative version-matched sources, installed-artifact introspection, a
+  versioned capability graph, project usage overlays, and progressively-disclosed
+  knowledge skills (see [docs/V0_3_IMPLEMENTATION_PLAN.md](docs/V0_3_IMPLEMENTATION_PLAN.md)).
 - **v0.4** — workspaces and multi-repository dependency analysis.
 - **v0.5** — real-agent evaluation harness with sandboxed execution and recorded
   transcripts; MCP server so agents can query SkillForge directly.

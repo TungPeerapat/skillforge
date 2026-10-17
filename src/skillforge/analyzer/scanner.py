@@ -133,6 +133,11 @@ class ScanOptions:
     include: tuple[str, ...] = ()
     extra_ignore: tuple[str, ...] = ()
     read_contents: bool = True
+    #: Opt-in (v0.3, default off so ``analyze`` stays byte-identical): retain
+    #: lockfile text for exact version resolution. Lockfiles have their own cap
+    #: and do not consume the analysis content budget.
+    read_lockfiles: bool = False
+    max_lockfile_size: int = 32 * 1024 * 1024
 
 
 @dataclass
@@ -363,7 +368,9 @@ class _Walker:
             return
 
         generated = _has_generated_name(name)
-        if self.options.read_contents and category not in _NO_CONTENT_CATEGORIES:
+        if category is FileCategory.LOCKFILE and self.options.read_lockfiles:
+            self._read_lockfile(absolute, rel_path, size)
+        elif self.options.read_contents and category not in _NO_CONTENT_CATEGORIES:
             self._read_content(absolute, rel_path, size, category)
             content = self.result.contents.get(rel_path)
             if content is not None and _looks_generated(content):
@@ -384,6 +391,30 @@ class _Walker:
                 is_generated=generated,
             )
         )
+
+    def _read_lockfile(self, absolute: Path, rel_path: str, size: int) -> None:
+        """Retain lockfile text under its own bounded cap (opt-in only)."""
+        if size > self.options.max_lockfile_size:
+            self._skip(
+                rel_path,
+                SkipReason.TOO_LARGE,
+                f"lockfile {size} bytes (max {self.options.max_lockfile_size})",
+            )
+            self.result.warnings.append(
+                f"Lockfile {rel_path} exceeds the configured size cap "
+                f"({size} > {self.options.max_lockfile_size} bytes) and was skipped; "
+                "it is treated as unresolved."
+            )
+            return
+        try:
+            content, truncated = read_text_capped(absolute, self.options.max_lockfile_size)
+        except OSError:
+            self._skip(rel_path, SkipReason.UNREADABLE)
+            return
+        if truncated:  # pragma: no cover - read_text_capped only truncates past the cap
+            self.result.truncated_files.add(rel_path)
+        self.result.contents[rel_path] = content
+        self.result.analyzed_bytes += len(content.encode("utf-8", errors="replace"))
 
     def _read_content(
         self, absolute: Path, rel_path: str, size: int, category: FileCategory

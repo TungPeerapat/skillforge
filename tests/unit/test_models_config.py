@@ -215,7 +215,8 @@ def test_unsafe_output_path_rejected(tmp_path: Path) -> None:
         load_settings(tmp_path, env={})
 
 
-def test_command_execution_rejected_in_this_release(tmp_path: Path) -> None:
+def test_command_execution_cannot_be_enabled_by_repository_config(tmp_path: Path) -> None:
+    """A repository must never be able to grant itself execution consent."""
     write_file(
         tmp_path,
         "skillforge.toml",
@@ -223,7 +224,7 @@ def test_command_execution_rejected_in_this_release(tmp_path: Path) -> None:
     )
     with pytest.raises(ConfigError) as excinfo:
         load_settings(tmp_path, env={})
-    assert "allow_command_execution" in str(excinfo.value)
+    assert "cannot enable command execution" in str(excinfo.value)
 
 
 def test_provider_api_key_env_resolution() -> None:
