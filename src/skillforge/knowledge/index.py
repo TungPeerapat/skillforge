@@ -65,6 +65,12 @@ def build_index_payloads(capabilities: Iterable[Capability]) -> dict[str, dict[s
     ordered = sorted(capabilities, key=lambda item: item.id)
     for capability in ordered:
         _add(by_name, capability.name.lower(), capability.id)
+        if capability.option:
+            for alias in capability.option.names:
+                _add(by_name, alias.lower(), capability.id)
+        if capability.cli:
+            for alias in capability.cli.aliases:
+                _add(by_name, alias.lower(), capability.id)
         if capability.qualified_name:
             _add(by_name, capability.qualified_name.lower(), capability.id)
         _add(by_kind, capability.kind.value, capability.id)

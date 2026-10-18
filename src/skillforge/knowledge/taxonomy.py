@@ -179,7 +179,13 @@ DEFAULT_DOMAINS: tuple[CapabilityDomain, ...] = (
 
 _KIND_DOMAINS: dict[CapabilityKind, str] = {
     CapabilityKind.CLI_COMMAND: "cli",
+    CapabilityKind.CLI_SUBCOMMAND: "cli",
+    CapabilityKind.CLI_OPTION: "cli",
+    CapabilityKind.CLI_FLAG: "cli",
+    CapabilityKind.CLI_ARGUMENT: "cli",
     CapabilityKind.CONFIG_OPTION: "configuration",
+    CapabilityKind.CONFIG_SECTION: "configuration",
+    CapabilityKind.CONFIG_KEY: "configuration",
     CapabilityKind.MIDDLEWARE: "middleware",
     CapabilityKind.HOOK: "middleware",
     CapabilityKind.EVENT: "middleware",

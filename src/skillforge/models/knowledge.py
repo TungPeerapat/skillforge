@@ -17,7 +17,7 @@ import json
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 from skillforge.models.common import Certainty, Evidence
 from skillforge.models.repository import DependencyScope
@@ -269,6 +269,9 @@ class KnowledgeSource(BaseModel):
     id: str
     technology: str
     version: str
+    #: Additive identity guard. Legacy entries without this cannot back K10
+    #: tool references until their source ecosystem has been re-established.
+    ecosystem: str | None = None
     url: str
     title: str = ""
     authority: SourceAuthority = SourceAuthority.UNKNOWN
@@ -329,6 +332,13 @@ class CapabilityKind(StrEnum):
     EVENT = "event"
     HOOK = "hook"
     MIDDLEWARE = "middleware"
+    # Append only: existing ranks and identifiers remain stable.
+    CLI_SUBCOMMAND = "cli_subcommand"
+    CLI_FLAG = "cli_flag"
+    CLI_OPTION = "cli_option"
+    CLI_ARGUMENT = "cli_argument"
+    CONFIG_SECTION = "config_section"
+    CONFIG_KEY = "config_key"
 
     @property
     def rank(self) -> int:
@@ -422,6 +432,61 @@ class ArtifactEvidence(BaseModel):
     detail: str = ""
 
 
+class ToolProvenance(BaseModel):
+    """Section/schema pointer and parser that produced tool metadata."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str
+    locator: str
+    extractor: str
+
+
+class CliSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    command_path: list[str]
+    usage: str | None = None
+    aliases: list[str] = Field(default_factory=list)
+
+
+class CliOptionSpec(BaseModel):
+    """Unknown is distinct from false, empty, or an explicitly null default."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str]
+    takes_value: bool | None = None
+    value_name: str | None = None
+    value_type: str | None = None
+    choices: list[JsonValue] | None = None
+    default_known: bool = False
+    default: JsonValue = None
+    required: bool | None = None
+    repeatable: bool | None = None
+
+
+class ConfigKeySpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key_path: list[str]
+    file_format: str | None = None
+    value_type: str | None = None
+    choices: list[JsonValue] | None = None
+    default_known: bool = False
+    default: JsonValue = None
+    required: bool | None = None
+
+
+class CliArgumentSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    value_type: str | None = None
+    required: bool | None = None
+    repeatable: bool | None = None
+
+
 class CapabilityDraft(BaseModel):
     """Unnormalized capability found by an artifact introspector (K6)."""
 
@@ -442,6 +507,11 @@ class CapabilityDraft(BaseModel):
     confidence: Certainty = Certainty.INFERENCE
     evidence: list[ArtifactEvidence] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
+    cli: CliSpec | None = None
+    option: CliOptionSpec | None = None
+    argument: CliArgumentSpec | None = None
+    config: ConfigKeySpec | None = None
+    tool_provenance: list[ToolProvenance] = Field(default_factory=list)
 
 
 class Capability(BaseModel):
@@ -468,6 +538,11 @@ class Capability(BaseModel):
     sources: list[str] = Field(default_factory=list)
     evidence: list[ArtifactEvidence] = Field(default_factory=list)
     confidence: Certainty = Certainty.INFERENCE
+    cli: CliSpec | None = None
+    option: CliOptionSpec | None = None
+    argument: CliArgumentSpec | None = None
+    config: ConfigKeySpec | None = None
+    tool_provenance: list[ToolProvenance] = Field(default_factory=list)
 
     @staticmethod
     def make_id(
@@ -641,6 +716,10 @@ __all__ = [
     "CapabilityRelationship",
     "CapabilityRelationshipKind",
     "CapabilitySignature",
+    "CliArgumentSpec",
+    "CliOptionSpec",
+    "CliSpec",
+    "ConfigKeySpec",
     "DependencyInventory",
     "DependencyRelationship",
     "DependencyRole",
@@ -656,6 +735,7 @@ __all__ = [
     "SourceAuthority",
     "SourceVerification",
     "SourceVerificationKind",
+    "ToolProvenance",
     "VersionClaim",
     "VersionInfo",
     "VersionLifecycle",

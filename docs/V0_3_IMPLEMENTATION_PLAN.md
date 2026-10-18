@@ -27,11 +27,16 @@
 | K7 — Documentation acquisition + normalization | **implemented core** | Default offline; repo configs cannot set network consent; optional `[knowledge]` httpx adapter pins public DNS results and TLS server name, disables proxies, bounds bytes, rechecks redirects, respects robots, and paces requests. Hash-checked offline cache + ETag/Last-Modified revalidation; HTML/Markdown/JSON/XML/YAML normalizers and same-host sitemap/llms/API-index URL discovery helper. Sequential worker (≤4). No live fetch performed; discovery orchestration/CLI integration remains for the build workflow. |
 | K8 — Capability extraction | **implemented bounded v1** | Proof-required draft merge, artifact signature precedence, signature conflict records, quote limits/redaction, EXACT official-source guards. Documentation extractor accepts explicitly typed API headings only: ordinary examples are not exported API evidence. Other documentation layouts produce coverage gaps, not invented capabilities. |
 | K9 — Versioned capability graph | **implemented core** | Deterministic typed edges, hierarchy/domain navigation, unknown-target and duplicate rejection, iterative DAG cycle checks, hash-aware persistence through the store. Related-to edges may be symmetric; hierarchy/extends/requires cycles are rejected. |
-| K10–K20 | **pending** | Next: K10 tool intelligence. Remaining lifecycle, coverage, overlay, CLI/build/search, compilation, incremental reuse, validation, exports, security/corpus review and release gates must still be completed. |
+| K10 — Tool / CLI / configuration intelligence | **implemented offline v1** | Additive CLI/config kinds and typed command/option/argument/config metadata, unknown vs explicit default semantics, section/schema-pointer provenance, exact source/technology/ecosystem/version guards, bounded reference/help and JSON Schema parsers, local-ref cycle guards, alias index lookup, command/config hierarchy through IR/store/graph. Default-off `CliProbePolicy`/injectable backend contract only: no live backend or probe CLI switch. Four-tool synthetic contract fixtures (pytest/Ruff/Next/dotnet); real official corpus verification remains K19. See `docs/tool-intelligence.md`. |
+| K11–K20 | **pending** | Next: K11 lifecycle. Remaining coverage, overlay, CLI/build/search, compilation, incremental reuse, validation, exports, security/corpus review and release gates must still be completed. |
 
-### Latest verification (2026-10-17)
+### Latest verification (2026-10-18)
 
-- Windows/Python 3.14: `689 passed, 1 skipped` (optional live LLM test has no API key).
+- Windows/Python 3.14: `733 passed, 1 skipped` (optional live LLM test has no API key).
+- K10 adds 44 offline tests: four-tool CLI/config contracts, identity/version rejection,
+  unknown/default distinctions, schema refs/budgets/redaction, probe policy/fake requests,
+  alias lookup, backward readability and store/index/graph integration.
+- Ruff lint/format, mypy (157 source files), and package build pass at K10 close.
 - Ruff/type checks and build are rerun at each bounded increment; no Linux result claimed.
 - Offline integration test covers artifact → extraction → store → index → graph.
 - Additional corrections: preserve callable parameter order; refuse store-key/file traversal;
@@ -1298,6 +1303,16 @@ tests · performance · acceptance criteria · explicit non-goals.
 - **Non-goals:** graph database, cross-library edges (except `related_to` evidence).
 
 ### K10 — Tool / CLI / Configuration Intelligence
+
+**Implemented scope note (2026-10-18):** Per the approved detailed K10 plan,
+production live probing is intentionally disabled. `ToolProbeService` accepts
+an injected backend for offline policy tests, but ships no subprocess backend;
+enabling policy without a backend returns a refusal. CLI consent integration
+and live probe security review remain for K14. No `doctor` probe helper is
+reused because it captures output without a streaming cap. Fixtures are
+synthetic reference-grammar contracts, not downloaded official docs and not
+whole-tool coverage evidence. Source ecosystem is an additive optional field;
+legacy unscoped sources still load but cannot support new K10 tool facts.
 
 - **Objective:** first-class knowledge for tools and their config/CLI surfaces.
 - **Reused:** command discovery, `utils/subproc.probe`, K7/K8 pipeline.

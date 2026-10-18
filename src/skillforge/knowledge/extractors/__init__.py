@@ -13,6 +13,13 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 from skillforge.knowledge.capabilities import drafts_to_capabilities
+from skillforge.knowledge.extractors.cli import CliReferenceExtractor
+from skillforge.knowledge.extractors.config import ConfigReferenceExtractor
+from skillforge.knowledge.extractors.tool_base import (
+    ToolCapabilityExtractor,
+    merge_tool_metadata,
+    verified_reference,
+)
 from skillforge.knowledge.normalize import NormalizedDocument
 from skillforge.models import (
     Capability,
@@ -67,14 +74,7 @@ class DocumentationExtractor:
         source: KnowledgeSource,
         plan: ExtractionPlan,
     ) -> list[CapabilityDraft]:
-        if (
-            not source.capability_eligible
-            or document.source_id != source.id
-            or document.url != source.url
-            or source.version != plan.target.version
-            or source.technology.lower() != plan.target.technology.lower()
-            or not document.version_match.is_exact
-        ):
+        if not verified_reference(document, source, plan.target):
             return []
         drafts: list[CapabilityDraft] = []
         for section in document.sections:
@@ -126,7 +126,10 @@ def extract_capabilities(
         trusted_sources = [
             identifier
             for identifier in draft.sources
-            if identifier in source_map and source_map[identifier].capability_eligible
+            if identifier in source_map
+            and source_map[identifier].capability_eligible
+            and source_map[identifier].technology.lower() == plan.target.technology.lower()
+            and source_map[identifier].version == plan.target.version
         ]
         if not draft.evidence and not trusted_sources:
             result.diagnostics.append(f"unproven draft skipped: {draft.qualified_name}")
@@ -152,6 +155,25 @@ def extract_capabilities(
             )
         if previous.signature is None:
             previous.signature = draft.signature
+        for metadata_field in ("cli", "option", "argument", "config"):
+            before, after = getattr(previous, metadata_field), getattr(draft, metadata_field)
+            if before is None:
+                setattr(previous, metadata_field, after)
+            elif after is not None:
+                combined, contradictions = merge_tool_metadata(before, after)
+                setattr(previous, metadata_field, combined)
+                if contradictions:
+                    result.conflicts.append(
+                        {
+                            "symbol": draft.qualified_name,
+                            "kind": metadata_field,
+                            "chosen": "first authoritative draft",
+                            "fields": ",".join(contradictions),
+                        }
+                    )
+        previous.tool_provenance.extend(
+            item for item in draft.tool_provenance if item not in previous.tool_provenance
+        )
         if not previous.description:
             previous.description = draft.description
         previous.sources = sorted(set(previous.sources) | set(draft.sources))
@@ -174,6 +196,20 @@ def extract_capabilities(
             continue
         for draft in extractor.extract(document, source, plan):
             merge(draft)
+        tool_extractors: list[ToolCapabilityExtractor] = [ConfigReferenceExtractor()]
+        if plan.target.technology.lower() in CliReferenceExtractor.supported_technologies:
+            tool_extractors.append(CliReferenceExtractor())
+        for tool_extractor in tool_extractors:
+            extracted = tool_extractor.extract_reference(
+                document,
+                source,
+                plan.target,
+                max_capabilities=plan.max_capabilities,
+                max_quote_chars=plan.max_quote_chars,
+            )
+            for draft in extracted.drafts:
+                merge(draft)
+            result.diagnostics.extend(extracted.diagnostics)
     result.capabilities = drafts_to_capabilities(merged.values())
     result.diagnostics = sorted(set(result.diagnostics))
     return result

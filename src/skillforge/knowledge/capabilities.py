@@ -140,6 +140,11 @@ def drafts_to_capabilities(drafts: Iterable[CapabilityDraft]) -> list[Capability
                 sources=list(draft.sources),
                 evidence=list(draft.evidence),
                 confidence=draft.confidence,
+                cli=draft.cli,
+                option=draft.option,
+                argument=draft.argument,
+                config=draft.config,
+                tool_provenance=list(draft.tool_provenance),
             )
         )
     return normalize_capabilities(capabilities)

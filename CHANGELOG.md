@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **v0.3 K10 — offline tool/CLI/config intelligence**: additive command,
+  subcommand, flag, option, argument and config-key metadata; exact
+  source/technology/ecosystem/version guards; bounded CLI reference/help parsing
+  and config/JSON Schema extraction (local refs only, cycle/depth/node caps).
+  Explicit false/empty/null defaults remain distinct from unknown. Later
+  evidence fills unknown metadata; contradictory facts remain conflicts.
+  Tool records flow through the existing IR, alias index, store and graph.
+- Default-off probe policy with fixed argv, version-first checks and an
+  injectable backend contract; **no live execution backend or new CLI switch**.
+  44 offline tests and synthetic pytest/Ruff/Next/dotnet reference fixtures.
+- `docs/tool-intelligence.md` documents supported grammar, provenance,
+  compatibility, safety boundaries and remaining corpus/integration work.
+
 - **v0.3 K6–K9 (bounded implementations)**: static artifact introspection for
   Python/Node/.NET/Go/Dart/Java; consent-gated documentation acquisition with
   pinned public DNS/TLS, robots, budgets, offline cache and revalidation;
